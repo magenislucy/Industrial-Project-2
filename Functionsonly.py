@@ -56,6 +56,20 @@ def average_surrounding_opinions(opinions, neighbours):
         
     return list(averages)
 
+
+
+def check_convergence_ongoing(model_t1, model_t2, convergence_val):
+    '''
+    Checks if there is "change" in the model between model_t1 and model_t2
+    '''
+    
+    if sum([abs(a-b) for a, b in zip(model_t1, model_t2)]) < convergence_val:
+        return True
+    else:
+        return False
+
+
+
 def run_basic_model(starting_opinions, num_repetitions, confidence, until_convergence = False, convergence_val = 0.0001):
     
     model = [starting_opinions]
@@ -86,15 +100,7 @@ def run_model_1(starting_opinions, num_repetitions, confidence, change_rate, unt
     
     return np.array(model)
 
-def check_convergence_ongoing(model_t1, model_t2, convergence_val):
-    '''
-    Checks if there is "change" in the model between model_t1 and model_t2
-    '''
-    
-    if sum([abs(a-b) for a, b in zip(model_t1, model_t2)]) < convergence_val:
-        return True
-    else:
-        return False
+
 
 
 def plot_model_Graph_a(model):
@@ -106,9 +112,7 @@ def plot_model_Graph_a(model):
         
     plt.ylabel("time steps")
     plt.xlabel("opinion")
-
-
-    
+ 
 def plot_model_Graph_b(model):
 
     for a in range(0,len(model[0])-1):

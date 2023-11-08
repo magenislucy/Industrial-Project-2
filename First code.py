@@ -122,3 +122,5 @@ model = run_model_1(test, 20, 0.2, until_convergence = True, change_rate = 0.01)
 
 plot_model_Graph_b(model)
 
+print("yo mama")
+

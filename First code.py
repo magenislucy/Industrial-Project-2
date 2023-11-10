@@ -7,7 +7,7 @@ import scipy.stats as stats
 from scipy.stats import truncnorm
 
 
-def get_startOpinions(N, dist):
+def get_startOpinions_1D(N, dist):
     '''
     
     Returns a list of N random numbers. Potentially include other distributions?
@@ -20,10 +20,12 @@ def get_startOpinions(N, dist):
     elif dist == "uniform_even":
         opinions = np.linspace(0, 1, N)
     elif dist == "normal_rand":
-        opinions = truncnorm(a=0., b=1., scale = 1, loc=0).rvs(size=N)
-    #elif dist == "Normal_Even":
-        #base = np.linspace(N)
-        #opinions = stats.norm.pdf(base, 0.5, 0.5)
+        mean = 0.5
+        std_dev = 0.25
+        random_numbers = np.random.normal(mean, std_dev, size=100)
+        opinions=np.clip(random_numbers, 0, 1)
+    #elif dist == "normal_even":
+        
     
     
     return list(opinions)
@@ -41,8 +43,13 @@ def calc_neighbours(opinions_list, confidence):
     neighbor_mat = []
     
     for opinion in opinions_list:
+        
+        
+        
         abs_differences = np.absolute(opinions_list - opinion)
-        neighbor_mat.append((abs_differences < confidence)*1)
+        neighbor_mat.append((abs_differences <= confidence)*1)
+        
+        
         
     return neighbor_mat
     
@@ -55,6 +62,7 @@ def average_surrounding_opinions(opinions, neighbours):
     averages = []
     
     for a in neighbours:
+        
         averages.append(np.sum(a*opinions)/sum(a))
         
     return list(averages)
@@ -71,6 +79,16 @@ def check_convergence_ongoing(model_t1, model_t2, convergence_val):
     else:
         return False
 
+def calc_howmanyconcensuses(model, tolerance = 0.00001):
+    
+    finaliterance = model[-1]
+    
+    
+    
+    
+    return 3
+
+
 
 
 def run_model_0(starting_opinions, num_repetitions, confidence, until_convergence = False, convergence_val = 0.0001):
@@ -83,6 +101,7 @@ def run_model_0(starting_opinions, num_repetitions, confidence, until_convergenc
         if until_convergence == True:
             if check_convergence_ongoing(model[i], model[i-1], convergence_val) == True:
                 break
+    
     
     return np.array(model)
 
@@ -97,6 +116,31 @@ def run_model_1(starting_opinions, num_repetitions, confidence, change_rate, unt
         neighbours = calc_neighbours(model[i-1], confidence)
         model.append(average_surrounding_opinions(model[i-1], neighbours))
         model[i] = [np.min([x + change_rate, 1]) for x in model[i]]
+        if until_convergence == True:
+            if check_convergence_ongoing(model[i], model[i-1], convergence_val) == True:
+                break
+    
+    return np.array(model)
+
+def run_model_2(starting_opinions, num_repetitions, confidence, change_rate, until_convergence = False, convergence_val = 0.0001, rateofdecrease = 0.01):
+    '''
+    Adds the fact that as time goes on, the agents lean more towards an opinion of 1 at a steady rate
+    Adds a linear decrease in confidence size
+    '''
+    
+    
+    
+    model = [starting_opinions]
+    
+    for i in range(1, num_repetitions):
+        newconfidence = np.max([confidence - i*rateofdecrease, 0])
+        
+        neighbours = calc_neighbours(model[i-1], newconfidence)
+        
+        model.append(average_surrounding_opinions(model[i-1], neighbours))
+        
+        model[i] = [np.min([x + change_rate, 1]) for x in model[i]]
+        
         if until_convergence == True:
             if check_convergence_ongoing(model[i], model[i-1], convergence_val) == True:
                 break
@@ -139,10 +183,10 @@ def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axisla
 
 
 
-test = get_startOpinions(100, "uniform_even")
+test = get_startOpinions_1D(20, "uniform_even")
 
 
-model = run_model_0(test, 20, 0.03, until_convergence = True)#, change_rate = 0.01)
+model = run_model_2(test, 20, 0.2, until_convergence = False, change_rate = 0, rateofdecrease = 0.03)
 
 plot_model_Graph_b(model)
 

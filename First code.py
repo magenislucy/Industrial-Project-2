@@ -41,13 +41,39 @@ def calc_neighbours(opinions_list, confidence):
     
     '''
     neighbor_mat = []
+    for opinion in opinions_list:
+        abs_differences = np.absolute(list(np.array(opinions_list) - opinion))
+        neighbor_mat.append((abs_differences <= confidence)*1)
+    return neighbor_mat
+
+
+def calc_neighbours_V2(opinions_list, confidence):
+    '''
+    deals with Dead agents
+    
+    returns a matrix representing neighbours. 1 represents a neighbour (opinion is within confidence distance), 0 represents not a neighbout (too far away).
+    
+    each row of the matrix represent the neighbours for each "member" in the opinions
+    ie row 5 represents the neighbours for the 5th opinion in opinions_list
+    
+    
+    '''
+    neighbor_mat = []
     
     for opinion in opinions_list:
         
         
+        abs_differences = []
+        for otheropinion in opinions_list:
+            
+            if opinion != None:
+                if otheropinion == None:
+                    abs_differences.append(np.inf)
+                else:
+                    
+                    abs_differences.append(np.absolute(otheropinion - opinion))
         
-        abs_differences = np.absolute(opinions_list - opinion)
-        neighbor_mat.append((abs_differences <= confidence)*1)
+        neighbor_mat.append(list(np.array(abs_differences) <= confidence)*1)
         
         
         
@@ -63,7 +89,30 @@ def average_surrounding_opinions(opinions, neighbours):
     
     for n in neighbours:
         
-        averages.append(np.average(n*opinions, weights = n))
+        averages.append(np.average(n*np.array(opinions), weights = n))
+        
+    return list(averages)
+
+def average_surrounding_opinions_V2(opinions, neighbours):
+    
+    
+    '''
+    Deals with Dead agent
+    finds the average of the neighbouring opinions 
+    '''
+    averages = []
+    tempsum = 0
+    for ns in neighbours:
+        for op in opinions:
+            for n in ns:
+                if op != None:
+                    tempsum += n * op
+        
+        
+        if sum(ns) == 0:
+            averages.append(0)
+        else:
+            averages.append(tempsum/sum(ns))
         
     return list(averages)
 
@@ -240,13 +289,36 @@ def run_model_4(starting_opinions, num_repetitions, confidence, until_convergenc
     
     '''
     
+    
     model = [starting_opinions]
     
+    num_agents = len(model[0])
+    
+    agentsages = [int(max(1, round(x*10/num_agents, 0))) for x in range(0, num_agents)]
+    
+    
     for i in range(1, num_repetitions):
-        neighbours = calc_neighbours(model[i-1], confidence)
-        model.append(average_surrounding_opinions(model[i-1], neighbours))
+        
+        print(i)
+        print(agentsages)
+        print(model[i-1])
+        
+        neighbours = calc_neighbours_V2(model[i-1], confidence)
+        
+        nextvals = average_surrounding_opinions_V2(model[i-1], neighbours)
+        
+        for i, age in enumerate(agentsages):
+            if age > 10:
+                nextvals[i] = None
+        
+        model.append(nextvals)
+        
+        agentsages = [x+1 for x in agentsages]
+        
         if until_convergence == True:
+            
             if check_convergence_ongoing(model[i], model[i-1], convergence_val) == True:
+                
                 break
     
     
@@ -280,7 +352,7 @@ def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axisla
     
     plt.title(title)
 
-    plt.ylim(-0.05, 1)    
+    #plt.ylim(-0.05, 1)    
 
     plt.xticks(range(0, num_iterations))
     
@@ -316,16 +388,16 @@ def plot_model_Graph_c(model, x_label = "Iteration", y_label = "Opinion", axisla
 
 
 
-test = get_startOpinions_1D(100, "uniform_even")
+test = get_startOpinions_1D(20, "uniform_even")
 
 
 
-model = run_model_0(test, 20, 0.2, until_convergence = True)
+model = run_model_4(test, 20, 0.2)
 #model = run_model_3_V2(test, 20, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [5], influencingweightvalues= [100])
 
 
 
-print(calc_howmanyconcensuses(model))
+#print(calc_howmanyconcensuses(model))
 
 plot_model_Graph_b(model, title = "model 0, 100 start, 0.2 eps")
 

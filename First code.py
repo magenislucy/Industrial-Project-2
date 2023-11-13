@@ -63,7 +63,7 @@ def average_surrounding_opinions(opinions, neighbours):
     
     for n in neighbours:
         
-        averages.append(np.sum(n*opinions)/sum(n))
+        averages.append(np.average(n*opinions, weights = n))
         
     return list(averages)
 
@@ -78,11 +78,8 @@ def average_surrounding_opinions_weighted(opinions, neighbours, agentweights):
     
     for n in neighbours:
         
-        print(np.average(n*opinions*agentweights))
-        averagedweights = np.divide(agentweights, sum(agentweights))
-        print(sum(averagedweights))
         
-        averages.append(np.average(np.array(n*opinions*agentweights), weights = averagedweights)) #doesnt work yet
+        averages.append(np.average(n*opinions, weights = n*agentweights)) #doesnt work yet
         
     return list(averages)
 
@@ -198,7 +195,7 @@ def run_model_3_V1(starting_opinions, num_repetitions, confidence, influentialag
 def run_model_3_V2(starting_opinions, num_repetitions, confidence, influentialagents, influencingconfidencevalues, influencingweightvalues, until_convergence = False, convergence_val = 0.0001, ):
     
     '''
-    Runs model with some values having a strong range or not JUST ADJUSTS CONFIDENCE INTERVALS
+    Runs model with some values having a strong range or not adjust confidence interval AND influencing weight
     '''
     model = [starting_opinions]
     
@@ -209,7 +206,7 @@ def run_model_3_V2(starting_opinions, num_repetitions, confidence, influentialag
         confidences[influentialagents[i]] *= influencingconfidencevalues[i] 
         weights[influentialagents[i]] *= influencingweightvalues[i]
     
-    print(weights)
+    print(confidences)
     
     for i in range(1, num_repetitions):
         
@@ -260,10 +257,10 @@ def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axisla
 
 
 
-test = get_startOpinions_1D(20, "uniform_even")
+test = get_startOpinions_1D(200, "uniform_even")
 
 
-model = run_model_3_V2(test, 20, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [1], influencingweightvalues= [100])
+model = run_model_3_V2(test, 20, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [3], influencingweightvalues= [14.5])
 
 plot_model_Graph_b(model)
 

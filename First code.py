@@ -101,10 +101,21 @@ def calc_howmanyconcensuses(model, tolerance = 0.00001):
     
     finaliterance = model[-1]
     
+    consensus_points = []
+    points_sorted = sorted(finaliterance)
+    curr_point = points_sorted[0]
+    curr_cluster = [curr_point]
+    for point in points_sorted[1:]:
+        if point <= curr_point + tolerance:
+            curr_cluster.append(point)
+        else:
+            consensus_points.append(curr_cluster)
+            curr_cluster = [point]
+        curr_point = point
+    consensus_points.append(curr_cluster)
     
     
-    
-    return 3
+    return len(consensus_points)
 
 
 
@@ -223,6 +234,26 @@ def run_model_3_V2(starting_opinions, num_repetitions, confidence, influentialag
     
     return np.array(model)
 
+def run_model_4(starting_opinions, num_repetitions, confidence, until_convergence = False, convergence_val = 0.0001):
+    
+    '''
+    
+    '''
+    
+    model = [starting_opinions]
+    
+    for i in range(1, num_repetitions):
+        neighbours = calc_neighbours(model[i-1], confidence)
+        model.append(average_surrounding_opinions(model[i-1], neighbours))
+        if until_convergence == True:
+            if check_convergence_ongoing(model[i], model[i-1], convergence_val) == True:
+                break
+    
+    
+    return np.array(model)
+
+
+
 
 def plot_model_Graph_a(model):
 
@@ -234,7 +265,7 @@ def plot_model_Graph_a(model):
     plt.ylabel("time steps")
     plt.xlabel("opinion")
  
-def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axislabelsize = 14, confidence_dist = 0):
+def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axislabelsize = 14, confidence_dist = 0, title = ""):
     
     num_iterations = len(model[:,0])
     num_agents = len(model[0])
@@ -246,7 +277,34 @@ def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axisla
          
     plt.xlabel(x_label, fontsize = axislabelsize)
     plt.ylabel(y_label, fontsize = axislabelsize)
+    
+    plt.title(title)
 
+    plt.ylim(-0.05, 1)    
+
+    plt.xticks(range(0, num_iterations))
+    
+
+    if confidence_dist != 0:
+        plt.plot([-0.3, -0.3], [0, confidence_dist], color = "black")
+
+def plot_model_Graph_c(model, x_label = "Iteration", y_label = "Opinion", axislabelsize = 14, confidence_dist = 0, title = ""):
+    
+    '''
+    plots average 
+    '''
+    num_iterations = len(model[:,0])
+    num_agents = len(model[0])
+    
+    colors = pl.cm.jet(np.linspace(0,1,num_agents))
+    
+    for a in range(0,num_agents-1):
+         plt.plot(range(0, num_iterations), model[:, a], color = colors[a])
+         
+    plt.xlabel(x_label, fontsize = axislabelsize)
+    plt.ylabel(y_label, fontsize = axislabelsize)
+
+    plt.title(title)    
 
     plt.xticks(range(0, num_iterations))
     
@@ -257,10 +315,17 @@ def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axisla
 
 
 
-test = get_startOpinions_1D(200, "uniform_even")
+
+test = get_startOpinions_1D(100, "uniform_even")
 
 
-model = run_model_3_V2(test, 20, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [3], influencingweightvalues= [14.5])
 
-plot_model_Graph_b(model)
+model = run_model_0(test, 20, 0.2, until_convergence = True)
+#model = run_model_3_V2(test, 20, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [5], influencingweightvalues= [100])
+
+
+
+print(calc_howmanyconcensuses(model))
+
+plot_model_Graph_b(model, title = "model 0, 100 start, 0.2 eps")
 

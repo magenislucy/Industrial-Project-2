@@ -52,7 +52,7 @@ def calc_neighbours(opinions_list, confidence):
         
         
     return neighbor_mat
-    
+
 def average_surrounding_opinions(opinions, neighbours):
     
     
@@ -61,11 +61,32 @@ def average_surrounding_opinions(opinions, neighbours):
     '''
     averages = []
     
-    for a in neighbours:
+    for n in neighbours:
         
-        averages.append(np.sum(a*opinions)/sum(a))
+        averages.append(np.sum(n*opinions)/sum(n))
         
     return list(averages)
+
+def average_surrounding_opinions_weighted(opinions, neighbours, agentweights):
+    
+    
+    '''
+    finds the average of the neighbouring opinions 
+    '''
+    averages = []
+    
+    
+    for n in neighbours:
+        
+        print(np.average(n*opinions*agentweights))
+        averagedweights = np.divide(agentweights, sum(agentweights))
+        print(sum(averagedweights))
+        
+        averages.append(np.average(np.array(n*opinions*agentweights), weights = averagedweights)) #doesnt work yet
+        
+    return list(averages)
+
+
 
 
 
@@ -147,7 +168,63 @@ def run_model_2(starting_opinions, num_repetitions, confidence, change_rate, unt
     
     return np.array(model)
 
+def run_model_3_V1(starting_opinions, num_repetitions, confidence, influentialagents, influencingconfidencevalues, until_convergence = False, convergence_val = 0.0001, ):
+    
+    '''
+    Runs model with some values having a strong range or not JUST ADJUSTS CONFIDENCE INTERVALS
+    '''
+    model = [starting_opinions]
+    
+    confidences = [confidence]*len(starting_opinions)
+    
+    for i in range(len(influentialagents)):
+        confidences[influentialagents[i]] *= influencingconfidencevalues[i]    
+    
+    for i in range(1, num_repetitions):
+        
+        neighbours = calc_neighbours(model[i-1], confidences)
+        
+        model.append(average_surrounding_opinions(model[i-1], neighbours))
+        
+        if until_convergence == True:
+            
+            if check_convergence_ongoing(model[i], model[i-1], convergence_val) == True:
+                
+                break
+    
+    
+    return np.array(model)
 
+def run_model_3_V2(starting_opinions, num_repetitions, confidence, influentialagents, influencingconfidencevalues, influencingweightvalues, until_convergence = False, convergence_val = 0.0001, ):
+    
+    '''
+    Runs model with some values having a strong range or not JUST ADJUSTS CONFIDENCE INTERVALS
+    '''
+    model = [starting_opinions]
+    
+    confidences = [confidence]*len(starting_opinions)
+    weights = [1]*len(starting_opinions)
+    
+    for i in range(len(influentialagents)):
+        confidences[influentialagents[i]] *= influencingconfidencevalues[i] 
+        weights[influentialagents[i]] *= influencingweightvalues[i]
+    
+    print(weights)
+    
+    for i in range(1, num_repetitions):
+        
+        neighbours = calc_neighbours(model[i-1], confidences)
+        
+        model.append(average_surrounding_opinions_weighted(model[i-1], neighbours, weights))
+        
+        if until_convergence == True:
+            
+            if check_convergence_ongoing(model[i], model[i-1], convergence_val) == True:
+                
+                break
+    
+    
+    return np.array(model)
 
 
 def plot_model_Graph_a(model):
@@ -186,7 +263,7 @@ def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axisla
 test = get_startOpinions_1D(20, "uniform_even")
 
 
-model = run_model_2(test, 20, 0.2, until_convergence = False, change_rate = 0, rateofdecrease = 0.03)
+model = run_model_3_V2(test, 20, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [1], influencingweightvalues= [100])
 
 plot_model_Graph_b(model)
 

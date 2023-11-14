@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import matplotlib.pylab as pl
 import scipy.stats as stats
 from scipy.stats import truncnorm
+import math
+import random
+from statistics import mean
 
 
 def get_startOpinions_1D(N, dist):
@@ -75,7 +78,7 @@ def calc_neighbours_V2(opinions_list, confidence):
         
         neighbor_mat.append(list(np.array(abs_differences) <= confidence)*1)
         
-        
+    #print(neighbor_mat)
         
     return neighbor_mat
 
@@ -102,17 +105,28 @@ def average_surrounding_opinions_V2(opinions, neighbours):
     '''
     averages = []
     tempsum = 0
+    lessaverages = 0
+    
+    
+    
     for ns in neighbours:
-        for op in opinions:
-            for n in ns:
-                if op != None:
-                    tempsum += n * op
-        
+        for i, n in enumerate(ns):
+            if opinions[i] != None:
+                tempsum += n * opinions[i]
+            elif n == True:
+                lessaverages += 1
         
         if sum(ns) == 0:
             averages.append(0)
         else:
-            averages.append(tempsum/sum(ns))
+            averages.append(tempsum/(sum(ns)-lessaverages))
+        lessaverages = 0
+        tempsum = 0
+        
+        
+    for i, prevop in enumerate(opinions):
+        if prevop == None:
+            averages[i] = None
         
     return list(averages)
 
@@ -283,10 +297,10 @@ def run_model_3_V2(starting_opinions, num_repetitions, confidence, influentialag
     
     return np.array(model)
 
-def run_model_4(starting_opinions, num_repetitions, confidence, until_convergence = False, convergence_val = 0.0001):
+def run_model_4_V1(starting_opinions, num_repetitions, confidence, agentsages, until_convergence = False, convergence_val = 0.0001):
     
     '''
-    
+    Only looks at deaths
     '''
     
     
@@ -294,14 +308,10 @@ def run_model_4(starting_opinions, num_repetitions, confidence, until_convergenc
     
     num_agents = len(model[0])
     
-    agentsages = [int(max(1, round(x*10/num_agents, 0))) for x in range(0, num_agents)]
+    
     
     
     for i in range(1, num_repetitions):
-        
-        print(i)
-        print(agentsages)
-        print(model[i-1])
         
         neighbours = calc_neighbours_V2(model[i-1], confidence)
         
@@ -310,6 +320,8 @@ def run_model_4(starting_opinions, num_repetitions, confidence, until_convergenc
         for i, age in enumerate(agentsages):
             if age > 10:
                 nextvals[i] = None
+                
+                
         
         model.append(nextvals)
         
@@ -324,7 +336,85 @@ def run_model_4(starting_opinions, num_repetitions, confidence, until_convergenc
     
     return np.array(model)
 
+def run_model_4_V2(starting_opinions, num_repetitions, confidence, agentsages, shiftval = 0, until_convergence = False, convergence_val = 0.0001):
+    
+    '''
+    Only looks at deaths
+    '''
 
+    deaths = []
+    births = []
+    
+    
+    
+    numaliveagents = len(starting_opinions)
+    totalnumagents = num_repetitions*numaliveagents +1
+    totalunbornagents = totalnumagents - numaliveagents + 1
+    
+    
+    model = [starting_opinions]
+    for i in range(0, totalunbornagents):
+        model[0].append(None)
+        model[0][-1] = None
+        agentsages.append(None)
+        
+    nexttobeborn = numaliveagents
+    
+    
+    
+    for i in range(1, num_repetitions):
+        
+        neighbours = calc_neighbours_V2(model[i-1], confidence)
+        
+        
+        nextvals = average_surrounding_opinions_V2(model[i-1], neighbours)
+        
+        print(agentsages)
+        
+        for j, age in enumerate(agentsages):
+            if age != None and age > 10:
+                if nextvals[j] != None:
+                    deaths.append([i-1, model[-1][j]])
+                
+                nextvals[j] = None
+                
+                
+                newvalofbirth = random.uniform(0, 0.5)
+                nextvals[nexttobeborn] = newvalofbirth
+                births.append([i, newvalofbirth + shiftval])
+                
+                agentsages[nexttobeborn] = 1
+                nexttobeborn += 1
+                
+        for i in range(0, len(nextvals)):
+            if nextvals[i] != None:
+                nextvals[i] += shiftval
+        
+        
+        model.append(nextvals)
+        
+        
+        
+        
+        newagentsages = []
+        for x in agentsages:
+            if x == None or x > 10:
+                newagentsages.append(None)
+            else:
+                newagentsages.append(x+1)
+        agentsages = newagentsages
+        
+        #model[-1] = [np.min([x + 0.1, 1]) for x in model[-1] if x != None]
+        
+        
+        if until_convergence == True:
+            
+            if check_convergence_ongoing(model[i], model[i-1], convergence_val) == True:
+                
+                break
+    
+    
+    return np.array(model), np.array(deaths), np.array(births)
 
 
 def plot_model_Graph_a(model):
@@ -356,6 +446,8 @@ def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axisla
 
     plt.xticks(range(0, num_iterations))
     
+    #plt.plot([0, 10], [0.2, 0.2], linestyle = "--")
+
 
     if confidence_dist != 0:
         plt.plot([-0.3, -0.3], [0, confidence_dist], color = "black")
@@ -384,20 +476,59 @@ def plot_model_Graph_c(model, x_label = "Iteration", y_label = "Opinion", axisla
     if confidence_dist != 0:
         plt.plot([-0.3, -0.3], [0, confidence_dist], color = "black")
 
+def plot_model_Graph_d(model, deaths, births, x_label = "Iteration", y_label = "Opinion", axislabelsize = 14, confidence_dist = 0, title = "", showaverage = False):
+    
+    
+    
+    
+    
+    num_iterations = len(model[:,0])
+    num_agents = len(model[0])
+    
+    colors = pl.cm.jet(np.linspace(0,1,num_agents))
+    
+    for a in range(0,num_agents-1):
+         plt.plot(range(0, num_iterations), model[:, a], color = colors[a])
+         
+    plt.xlabel(x_label, fontsize = axislabelsize)
+    plt.ylabel(y_label, fontsize = axislabelsize)
+    
+    plt.title(title)
+
+    #plt.ylim(-0.05, 1)    
+
+    plt.xticks(range(0, num_iterations))
+    
+    plt.scatter(deaths[:, 0], deaths[:, 1], marker = "x", color = "red")
+    plt.scatter(births[:, 0], births[:, 1], marker = "o", color = "green")
+    
+    if confidence_dist != 0:
+        plt.plot([-0.3, -0.3], [0, confidence_dist], color = "black")
+        
+        
+    if showaverage == True:
+        plt.plot(range(0, num_iterations), [mean(a for a in x if a != None) for x in model], linestyle = "--", color = "black")
+
+num_agents = 20
+
+test = get_startOpinions_1D(num_agents, "uniform_even")
+
+#agentsages = [int(max(1, round(x*10/num_agents, 0))) for x in range(0, num_agents)]
+agentsages = list(np.random.randint(0, 10, num_agents))
 
 
 
+#print(average_surrounding_opinions_V2([1, None], [[1, 0],[0, 1]]))
 
-test = get_startOpinions_1D(20, "uniform_even")
-
-
-
-model = run_model_4(test, 20, 0.2)
-#model = run_model_3_V2(test, 20, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [5], influencingweightvalues= [100])
-
+model, deaths, births = run_model_4_V2(test, 100, 0.2, agentsages, shiftval = 0.02)
+#model = run_model_3_V2(test, 10, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [1], influencingweightvalues= [1])
+#model = run_model_2(test, 20, 0.2, 0, rateofdecrease = 0.04, until_convergence = True)
 
 
 #print(calc_howmanyconcensuses(model))
 
-plot_model_Graph_b(model, title = "model 0, 100 start, 0.2 eps")
+#print(deaths)
+
+#plot_model_Graph_b(model)
+plot_model_Graph_d(model, deaths, births, showaverage = True)
 

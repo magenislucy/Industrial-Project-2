@@ -8,6 +8,8 @@ from scipy.stats import truncnorm
 import math
 import random
 from statistics import mean
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator
 
 
 def get_startOpinions_1D(N, dist):
@@ -509,7 +511,43 @@ def plot_model_Graph_d(model, deaths, births, x_label = "Iteration", y_label = "
     if showaverage == True:
         plt.plot(range(0, num_iterations), [mean(a for a in x if a != None) for x in model], linestyle = "--", color = "black")
 
-num_agents = 20
+
+def plot_model_Graph_3D(model):
+    
+    modelrounded = np.round(model, decimals = 2)
+    newmodel = []
+    
+    numopinionintevals = 100
+    opinions = [x/numopinionintevals for x in range(0, numopinionintevals+1)]
+    numsteps = np.arange(0, len(model[:, 0]))
+    
+    ops, its = np.meshgrid(opinions, numsteps)
+    print(its)
+    
+    temparray = []
+    for a, it in enumerate(its):
+        for i in range(0, len(opinions)):
+            
+            if i == 0:
+                temparray.append(np.count_nonzero(modelrounded[a] <= opinions[i]))
+            else:
+                temparray.append(np.count_nonzero(modelrounded[a] <= opinions[i])-np.count_nonzero(modelrounded[a] <= opinions[i-1]))
+        newmodel.append(temparray)
+        temparray = []
+        #print(numopinions)
+        print(modelrounded[a])
+        #
+        print(newmodel[-1])
+            
+    newmodel = np.array(newmodel)
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    surf = ax.plot_surface(ops, its, newmodel, cmap='cool', linewidth=0, antialiased=False)
+    
+    plt.show()
+    
+
+
+num_agents = 100
 
 test = get_startOpinions_1D(num_agents, "uniform_even")
 
@@ -520,9 +558,9 @@ agentsages = list(np.random.randint(0, 10, num_agents))
 
 #print(average_surrounding_opinions_V2([1, None], [[1, 0],[0, 1]]))
 
-model, deaths, births = run_model_4_V2(test, 100, 0.2, agentsages, shiftval = 0.02)
+#model, deaths, births = run_model_4_V2(test, 100, 0.2, agentsages, shiftval = 0.02)
 #model = run_model_3_V2(test, 10, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [1], influencingweightvalues= [1])
-#model = run_model_2(test, 20, 0.2, 0, rateofdecrease = 0.04, until_convergence = True)
+model = run_model_2(test, 20, 0.2, 0, rateofdecrease = 0.0, until_convergence = True)
 
 
 #print(calc_howmanyconcensuses(model))
@@ -530,5 +568,6 @@ model, deaths, births = run_model_4_V2(test, 100, 0.2, agentsages, shiftval = 0.
 #print(deaths)
 
 #plot_model_Graph_b(model)
-plot_model_Graph_d(model, deaths, births, showaverage = True)
+plot_model_Graph_3D(model)
+#plot_model_Graph_d(model, deaths, births, showaverage = True)
 

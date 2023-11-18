@@ -78,13 +78,17 @@ def check_convergence_ongoing(model_t1, model_t2, convergence_val):
 
 
 def run_model_0(num_agents, initial, num_repetitions, confidence, dim = 2, until_convergence = False, convergence_val = 0.0001):
+    '''
+    not consider death/birth, no effect between 2 topics, use a certain confidence
     
+    '''
     # initialization
     model = get_startOpinions(num_agents, initial, dim = dim).reshape(1,num_agents,dim)
 
+    # do iterations
     for i in range(1, num_repetitions):
-        weights = calc_weights(model[i-1], confidence, dim = dim)
-        new_model = update_opinions(model[i-1], weights)
+        weights = calc_weights(model[i-1], confidence, dim = dim)  # generate new weights
+        new_model = update_opinions(model[i-1], weights)  # update with new weights
         model = np.concatenate((model, new_model.reshape(1,num_agents,dim)), axis=0)
         
         if until_convergence == True:

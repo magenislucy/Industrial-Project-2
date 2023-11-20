@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import Functionsonly as fc
 
 def get_startOpinions(N, initial, dim = 2):
     '''
@@ -99,9 +100,14 @@ def run_model_0(num_agents, initial, num_repetitions, confidence, dim = 2, until
     return np.array(model)
 
 
-num_agents = 11
+num_agents = 101
 initial = "uniform_even"
 num_repetitions = 20
-confidence = 0.5
-a = run_model_0(num_agents, initial, num_repetitions, confidence, dim = 2, until_convergence = False, convergence_val = 0.0001)
-print(a)
+confidence = 0.25
+dim = 2
+model = run_model_0(num_agents, initial, num_repetitions, confidence, dim = dim, until_convergence = False, convergence_val = 0.0001)
+print(model)
+
+for i in range(dim):
+    fc.plot_model_Graph_b(model[:,:,i])
+    plt.show()

@@ -113,7 +113,56 @@ def plot_model_Graph_a(model):
     plt.ylabel("time steps")
     plt.xlabel("opinion")
  
-def plot_model_Graph_b(model):
+# def plot_model_Graph_b(model):
 
-    for a in range(0,len(model[0])-1):
-         plt.plot(range(0, len(model[:,0])), model[:, a])
+#     for a in range(0,len(model[0])-1):
+#          plt.plot(range(0, len(model[:,0])), model[:, a])
+
+def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axislabelsize = 14, confidence_dist = 0, title = ""):
+    
+    num_iterations = len(model[:,0])
+    num_agents = len(model[0])
+    
+    colors = pl.cm.jet(np.linspace(0,1,num_agents))
+    
+    for a in range(0,num_agents-1):
+         plt.plot(range(0, num_iterations), model[:, a], color = colors[a])
+         
+    plt.xlabel(x_label, fontsize = axislabelsize)
+    plt.ylabel(y_label, fontsize = axislabelsize)
+    
+    plt.title(title)
+
+    #plt.ylim(-0.05, 1)    
+
+    plt.xticks(range(0, num_iterations))
+    
+    #plt.plot([0, 10], [0.2, 0.2], linestyle = "--")
+
+
+    if confidence_dist != 0:
+        plt.plot([-0.3, -0.3], [0, confidence_dist], color = "black")
+
+def plot_model_Graph_c(model, x_label = "Iteration", y_label = "Opinion", axislabelsize = 14, confidence_dist = 0, title = ""):
+    
+    '''
+    plots average 
+    '''
+    num_iterations = len(model[:,0])
+    num_agents = len(model[0])
+    
+    colors = pl.cm.jet(np.linspace(0,1,num_agents))
+    
+    for a in range(0,num_agents-1):
+         plt.plot(range(0, num_iterations), model[:, a], color = colors[a])
+         
+    plt.xlabel(x_label, fontsize = axislabelsize)
+    plt.ylabel(y_label, fontsize = axislabelsize)
+
+    plt.title(title)    
+
+    plt.xticks(range(0, num_iterations))
+    
+
+    if confidence_dist != 0:
+        plt.plot([-0.3, -0.3], [0, confidence_dist], color = "black")

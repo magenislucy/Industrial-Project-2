@@ -42,7 +42,7 @@ def calc_weights(opinions_list, confidence, dim = 2):
     '''
     N, dim = np.shape(opinions_list)
     weight = np.zeros([N, N, dim])
-    distance = np.zeros([N, dim])
+    distance = np.zeros([N, dim])  # the distance for a certain member
     # distance = np.zeros(N)
 
     for i in range(N):

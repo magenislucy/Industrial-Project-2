@@ -110,4 +110,5 @@ print(model)
 
 for i in range(dim):
     fc.plot_model_Graph_b(model[:,:,i])
+    plt.title(f'topic {i}')
     plt.show()

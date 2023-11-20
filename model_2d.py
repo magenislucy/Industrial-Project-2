@@ -49,7 +49,8 @@ def calc_weights(opinions_list, confidence, dim = 2):
         opinion = opinions_list[i,:]
 
         for j in range(N):
-            distance[j,:] = np.absolute(opinions_list[j,:] - opinion)
+            # distance[j,:] = np.absolute(opinions_list[j,:] - opinion)  # seperately
+            distance[j,:] = np.linalg.norm(opinions_list[j,:] - opinion)  # L2 norm
 
         weight[i,:,:] = distance <= confidence  # work seperately, weight in 0 or 1
     return weight
@@ -98,9 +99,9 @@ def run_model_0(num_agents, initial, num_repetitions, confidence, dim = 2, until
     return np.array(model)
 
 
-num_agents = 10
+num_agents = 11
 initial = "uniform_even"
 num_repetitions = 20
-confidence = 0.25
+confidence = 0.5
 a = run_model_0(num_agents, initial, num_repetitions, confidence, dim = 2, until_convergence = False, convergence_val = 0.0001)
 print(a)

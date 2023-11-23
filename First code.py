@@ -1,5 +1,8 @@
 
 
+
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.pylab as pl
@@ -547,12 +550,47 @@ def plot_model_Graph_3D(model):
     
 
 
+
+def run_experiment_1(opinions, numrepeats, num_agents):
+    
+    arraytoreturn = []
+    nopeaks = []
+    
+    for ops in opinions:
+        nopeaks = []
+        print(ops)
+        for i in range(numrepeats):
+        
+            startagents = get_startOpinions_1D(num_agents, "uniform_rand")    
+        
+            tempmodel = run_model_2(startagents, 20, ops, 0, rateofdecrease = 0.0, until_convergence = True)
+            nopeaks.append(calc_howmanyconcensuses(tempmodel))
+        arraytoreturn.append(nopeaks)
+            
+    return arraytoreturn
+
+def plot_experiment_1(opinions, concensuses):
+    
+    fig, ax = plt.subplots()
+    
+    averageconcensuses = [np.mean(a) for a in testarray]
+
+    ax.plot( opinions, averageconcensuses)
+    
+    ax.set_ylabel("Average no. Consensusses", fontsize = 14)
+    ax.set_xlabel("Confidence Region", fontsize = 14)
+    
+    
+    
+
 num_agents = 100
 
-test = get_startOpinions_1D(num_agents, "uniform_even")
+test =  get_startOpinions_1D(num_agents, "uniform_rand")
+
+test.sort()
 
 #agentsages = [int(max(1, round(x*10/num_agents, 0))) for x in range(0, num_agents)]
-agentsages = list(np.random.randint(0, 10, num_agents))
+#agentsages = list(np.random.randint(0, 1, num_agents))
 
 
 
@@ -560,14 +598,19 @@ agentsages = list(np.random.randint(0, 10, num_agents))
 
 #model, deaths, births = run_model_4_V2(test, 100, 0.2, agentsages, shiftval = 0.02)
 #model = run_model_3_V2(test, 10, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [1], influencingweightvalues= [1])
-model = run_model_2(test, 20, 0.2, 0, rateofdecrease = 0.0, until_convergence = True)
+#model = run_model_2(test, 20, 0.2, 0.0, rateofdecrease = 0.0, until_convergence = False)
 
+opinionstotest = np.linspace(.1, .3, 10)
+
+testarray = run_experiment_1(opinionstotest, 10, 100)
+
+plot_experiment_1(opinionstotest, testarray)
 
 #print(calc_howmanyconcensuses(model))
 
 #print(deaths)
 
 #plot_model_Graph_b(model)
-plot_model_Graph_3D(model)
+#plot_model_Graph_3D(model)
 #plot_model_Graph_d(model, deaths, births, showaverage = True)
 

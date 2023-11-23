@@ -53,7 +53,31 @@ def calc_weights(opinions_list, confidence, dim = 2):
             # distance[j,:] = np.absolute(opinions_list[j,:] - opinion)  # seperately
             distance[j,:] = np.linalg.norm(opinions_list[j,:] - opinion)  # L2 norm
 
-        weight[i,:,:] = distance <= confidence  # work seperately, weight in 0 or 1
+        weight[i,:,:] = distance <= confidence[0]  # work seperately, weight in 0 or 1
+    return weight
+
+def calc_weights1(opinions_list, confidence, dim = 2):
+    N, dim = np.shape(opinions_list)
+    weight = np.zeros([N, N, dim])
+    distance = np.zeros([N, dim])  # the distance for a certain member
+    # distance = np.zeros(N)
+
+    for i in range(N):
+        opinion = opinions_list[i,:]
+
+        for j in range(N):
+            distance[j,:] = np.absolute(opinions_list[j,:] - opinion)  # first compute seperately
+            # distance[j,:] = np.linalg.norm(opinions_list[j,:] - opinion)  # L2 norm
+            
+            for k in range(dim):
+                weight[i,j,k] = distance[j,k] <= confidence[k]  # work seperately, weight in 0 or 1
+            
+            # add the interest when outside the confidence but inside other topic
+            for k in range(dim):
+                if weight[i,j,k] == 0:
+                    others_opn = 0.05 * (sum(weight[i,j,:]) - weight[i,j,k]) / dim
+                    weight[i,j,k] = max(weight[i,j,k], others_opn)
+
     return weight
 
 
@@ -100,12 +124,33 @@ def run_model_0(num_agents, initial, num_repetitions, confidence, dim = 2, until
     return np.array(model)
 
 
+def run_model_1(num_agents, initial, num_repetitions, confidence, dim = 2, until_convergence = False, convergence_val = 0.0001):
+    '''
+    not consider death/birth, no effect between 2 topics, use a certain confidence
+    
+    '''
+    # initialization
+    model = get_startOpinions(num_agents, initial, dim = dim).reshape(1,num_agents,dim)
+
+    # do iterations
+    for i in range(1, num_repetitions):
+        weights = calc_weights1(model[i-1], confidence, dim = dim)  # generate new weights
+        new_model = update_opinions(model[i-1], weights)  # update with new weights
+        model = np.concatenate((model, new_model.reshape(1,num_agents,dim)), axis=0)
+        
+        if until_convergence == True:
+            if check_convergence_ongoing(model[i], model[i-1], convergence_val) == True:
+                break
+    
+    return np.array(model)
+
+
 num_agents = 101
 initial = "uniform_even"
-num_repetitions = 20
-confidence = 0.25
+num_repetitions = 50
+confidence = [0.2,0.1]
 dim = 2
-model = run_model_0(num_agents, initial, num_repetitions, confidence, dim = dim, until_convergence = False, convergence_val = 0.0001)
+model = run_model_1(num_agents, initial, num_repetitions, confidence, dim = dim, until_convergence = False, convergence_val = 0.0001)
 print(model)
 
 for i in range(dim):

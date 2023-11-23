@@ -75,7 +75,7 @@ def calc_weights1(opinions_list, confidence, dim = 2):
             # add the interest when outside the confidence but inside other topic
             for k in range(dim):
                 if weight[i,j,k] == 0:
-                    others_opn = 0.05 * (sum(weight[i,j,:]) - weight[i,j,k]) / dim
+                    others_opn = 0.04 * (sum(weight[i,j,:]) - weight[i,j,k]) / dim
                     weight[i,j,k] = max(weight[i,j,k], others_opn)
 
     return weight
@@ -146,7 +146,7 @@ def run_model_1(num_agents, initial, num_repetitions, confidence, dim = 2, until
 
 
 num_agents = 101
-initial = "uniform_even"
+initial = "uniform_rand"  # "uniform_even", "uniform_rand", "normal_rand"
 num_repetitions = 50
 confidence = [0.2,0.1]
 dim = 2

@@ -78,34 +78,54 @@ def calc_weights1(opinions_list, confidence, dim = 2):
                     weight[i,j,k] = others_opn
     return weight
 
-def calc_weights2(opinions_list, confidence, inconfidence, dim = 2):
-    N, dim = np.shape(opinions_list)
-    weight = np.zeros([N, N, dim])
-    distance = np.zeros([N, dim])  # the distance for a certain member
-    disagree = np.zeros([N, dim])
+# def calc_weights2(opinions_list, confidence, inconfidence, dim = 2):
+#     N, dim = np.shape(opinions_list)
+#     weight = np.zeros([N, N, dim])
+#     distance = np.zeros([N, dim])  # the distance for a certain member
+#     disagree = np.zeros([N, dim])
 
-    for i in range(N):
-        opinion = opinions_list[i,:]
+#     for i in range(N):
+#         opinion = opinions_list[i,:]
 
-        for j in range(N):
-            distance[j,:] = np.absolute(opinions_list[j,:] - opinion)  # first compute seperately
-            # distance[j,:] = np.linalg.norm(opinions_list[j,:] - opinion)  # L2 norm
+#         for j in range(N):
+#             distance[j,:] = np.absolute(opinions_list[j,:] - opinion)  # first compute seperately
+#             # distance[j,:] = np.linalg.norm(opinions_list[j,:] - opinion)  # L2 norm
             
-            for k in range(dim):
-                weight[i,j,k] = distance[j,k] <= confidence[k]  # work seperately, weight in 0 or 1
-                disagree[j,k] = distance[j,k] >= inconfidence[k]
+#             for k in range(dim):
+#                 weight[i,j,k] = distance[j,k] <= confidence[k]  # work seperately, weight in 0 or 1
+#                 disagree[j,k] = distance[j,k] >= inconfidence[k]
 
-            # add the interest when outside the confidence this one but inside other topic
-            for k in range(dim):
-                # if weight[i,j,k] == 0:
-                others_near = 0.04 * (sum(weight[i,j,:]) - weight[i,j,k]) / dim
+#             # add the interest when outside the confidence this one but inside other topic
+#             for k in range(dim):
+#                 # if weight[i,j,k] == 0:
+#                 others_near = 0.04 * (sum(weight[i,j,:]) - weight[i,j,k]) / dim
 
-                # weight[i,:,:] = distance >= inconfidence[0]
-                others_far = -10 * (sum(disagree[j,:])) / dim
-                weight[i,j,k] += (others_near + others_far)
-                weight[i,j,k] = np.clip(weight[i,j,k], 0, 1)
+#                 # weight[i,:,:] = distance >= inconfidence[0]
+#                 others_far = -1 * (sum(disagree[j,:])) / dim
+#                 weight[i,j,k] += (others_near + others_far)
+#                 weight[i,j,k] = np.clip(weight[i,j,k], 0, 1)
+#     return weight
+
+def calc_weights2(opinions_list, confidence, inconfidence, dim=2):
+    N, _ = np.shape(opinions_list)
+    weight = np.zeros([N, N, dim])
+
+    distance = np.abs(opinions_list[:, np.newaxis, :] - opinions_list[np.newaxis, :, :])
+    
+    weight = (distance <= confidence).astype(float)
+    outside_inconfidence = (distance >= inconfidence).astype(float)
+    
+    for i in range(N):
+        for j in range(N):
+            for k in range(dim):
+                
+                others_near = 0.04 * (np.sum(weight[i, j, :]) - weight[i, j, k]) / dim
+                others_far = -1 * np.sum(outside_inconfidence[i, j, :]) / dim
+                weight[i, j, k] += (others_near + others_far)
+
+    weight = np.clip(weight, 0, 1)
+    
     return weight
-
 
 def update_opinions(opinions, weights):
     '''
@@ -171,7 +191,7 @@ def run_model_1(num_agents, initial, num_repetitions, confidence, dim = 2, until
 
 def run_model_2(num_agents, initial, num_repetitions, confidence, inconfidence, dim = 2, until_convergence = False, convergence_val = 0.0001):
     '''
-    not consider death/birth, no effect between 2 topics, use a certain confidence
+    not consider death/birth, affect between 2 topics, use a certain confidence
     
     '''
     # initialization
@@ -193,8 +213,8 @@ def run_model_2(num_agents, initial, num_repetitions, confidence, inconfidence, 
 num_agents = 101
 initial = "uniform_rand"  # "uniform_even", "uniform_rand", "normal_rand"
 num_repetitions = 20
-confidence = [0.1, 0.1]
-inconfidence = [0.3, 0.3]
+confidence = [0.1, 0.15]
+inconfidence = [0.5, 0.7]
 dim = 2
 # model = run_model_1(num_agents, initial, num_repetitions, confidence, dim = dim, until_convergence = False, convergence_val = 0.0001)
 model = run_model_2(num_agents, initial, num_repetitions, confidence, inconfidence, dim = dim, until_convergence = False, convergence_val = 0.0001)
@@ -202,5 +222,7 @@ print(model)
 
 for i in range(dim):
     fc.plot_model_Graph_b(model[:,:,i])
-    plt.title(f'topic {i}')
+    plt.title(f'topic {i} with confidence interval {confidence[i]}', fontsize=15)
+    plt.gca().xaxis.set_major_locator(plt.MaxNLocator(nbins=11))
+    # plt.savefig(f"topic{i}_2d.svg", format='svg')
     plt.show()

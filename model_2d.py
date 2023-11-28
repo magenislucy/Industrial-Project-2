@@ -213,8 +213,8 @@ def run_model_2(num_agents, initial, num_repetitions, confidence, inconfidence, 
 num_agents = 101
 initial = "uniform_rand"  # "uniform_even", "uniform_rand", "normal_rand"
 num_repetitions = 20
-confidence = [0.1, 0.15]
-inconfidence = [0.5, 0.7]
+confidence = [0.2, 0.2]
+inconfidence = [0.9, 0.9]
 dim = 2
 # model = run_model_1(num_agents, initial, num_repetitions, confidence, dim = dim, until_convergence = False, convergence_val = 0.0001)
 model = run_model_2(num_agents, initial, num_repetitions, confidence, inconfidence, dim = dim, until_convergence = False, convergence_val = 0.0001)
@@ -224,5 +224,5 @@ for i in range(dim):
     fc.plot_model_Graph_b(model[:,:,i])
     plt.title(f'topic {i} with confidence interval {confidence[i]}', fontsize=15)
     plt.gca().xaxis.set_major_locator(plt.MaxNLocator(nbins=11))
-    # plt.savefig(f"topic{i}_2d.svg", format='svg')
+    # plt.savefig(f"topic{i}_2dplus.svg", format='svg')
     plt.show()

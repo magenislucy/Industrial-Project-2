@@ -226,3 +226,26 @@ for i in range(dim):
     plt.gca().xaxis.set_major_locator(plt.MaxNLocator(nbins=11))
     # plt.savefig(f"topic{i}_2dplus.svg", format='svg')
     plt.show()
+
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+for j in range(model.shape[1]):
+    
+    x = model[:, j, 0]
+    y = model[:, j, 1]
+    z = np.arange(model.shape[0])
+    ax.plot(x, y, z)
+
+ax.set_title("2D model")
+ax.set_xlabel("opinion 0")
+ax.set_ylabel("opinion 1")
+ax.set_zlabel("Iteration")
+ax.set_box_aspect([1.5, 1.5, 2])
+ax.set_xlim([0, 1])
+ax.set_ylim([0, 1])
+ax.set_zlim([0, 20]) 
+
+# fig.savefig(f"2dmodel.svg", format='svg')
+plt.show()

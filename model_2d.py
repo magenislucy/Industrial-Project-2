@@ -224,7 +224,7 @@ for i in range(dim):
     fc.plot_model_Graph_b(model[:,:,i])
     plt.title(f'topic {i} with confidence interval {confidence[i]}', fontsize=15)
     plt.gca().xaxis.set_major_locator(plt.MaxNLocator(nbins=11))
-    # plt.savefig(f"topic{i}_2dplus.svg", format='svg')
+    plt.savefig(f"topic{i}_2dplus.pdf", format='pdf')
     plt.show()
 
 
@@ -247,5 +247,5 @@ ax.set_xlim([0, 1])
 ax.set_ylim([0, 1])
 ax.set_zlim([0, 20]) 
 
-# fig.savefig(f"2dmodel.svg", format='svg')
+fig.savefig(f"2dmodel.pdf", format='pdf')
 plt.show()

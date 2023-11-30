@@ -119,7 +119,7 @@ def calc_weights2(opinions_list, confidence, inconfidence, dim=2):
         for j in range(N):
             for k in range(dim):
                 
-                others_near = 0.04 * (np.sum(weight[i, j, :]) - weight[i, j, k]) / dim
+                others_near = 0 * (np.sum(weight[i, j, :]) - weight[i, j, k]) / dim
                 others_far = -1 * np.sum(outside_inconfidence[i, j, :]) / dim
                 weight[i, j, k] += (others_near + others_far)
 
@@ -224,7 +224,7 @@ for i in range(dim):
     fc.plot_model_Graph_b(model[:,:,i])
     plt.title(f'topic {i} with confidence interval {confidence[i]}', fontsize=15)
     plt.gca().xaxis.set_major_locator(plt.MaxNLocator(nbins=11))
-    plt.savefig(f"topic{i}_2dplus.pdf", format='pdf')
+    # plt.savefig(f"topic{i}_2d.pdf", format='pdf')
     plt.show()
 
 
@@ -247,5 +247,5 @@ ax.set_xlim([0, 1])
 ax.set_ylim([0, 1])
 ax.set_zlim([0, 20]) 
 
-fig.savefig(f"2dmodel.pdf", format='pdf')
+# fig.savefig(f"2dmodel.pdf", format='pdf')
 plt.show()

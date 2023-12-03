@@ -30,7 +30,7 @@ def get_startOpinions_1D(N, dist):
     elif dist == "normal_rand":
         mean = 0.5
         std_dev = 0.25
-        random_numbers = np.random.normal(mean, std_dev, size=100)
+        random_numbers = np.random.normal(mean, std_dev, size=N)
         opinions=np.clip(random_numbers, 0, 1)
     #elif dist == "normal_even":
         
@@ -285,7 +285,7 @@ def run_model_3_V2(starting_opinions, num_repetitions, confidence, influentialag
         confidences[influentialagents[i]] *= influencingconfidencevalues[i] 
         weights[influentialagents[i]] *= influencingweightvalues[i]
     
-    print(confidences)
+    #print(confidences)
     
     for i in range(1, num_repetitions):
         
@@ -343,9 +343,6 @@ def run_model_4_V1(starting_opinions, num_repetitions, confidence, agentsages, u
 
 def run_model_4_V2(starting_opinions, num_repetitions, confidence, agentsages, shiftval = 0, until_convergence = False, convergence_val = 0.0001):
     
-    '''
-    Only looks at deaths
-    '''
 
     deaths = []
     births = []
@@ -368,13 +365,12 @@ def run_model_4_V2(starting_opinions, num_repetitions, confidence, agentsages, s
     
     
     for i in range(1, num_repetitions):
-        
+        print(i)
         neighbours = calc_neighbours_V2(model[i-1], confidence)
         
         
         nextvals = average_surrounding_opinions_V2(model[i-1], neighbours)
         
-        print(agentsages)
         
         for j, age in enumerate(agentsages):
             if age != None and age > 10:
@@ -432,7 +428,9 @@ def plot_model_Graph_a(model):
     plt.ylabel("time steps")
     plt.xlabel("opinion")
  
-def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axislabelsize = 14, confidence_dist = 0, title = ""):
+def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axislabelsize = 14, confidence_dist = 0, title = "", Ifigsize = (7, 5)):
+    
+    fix, ax = plt.subplots(figsize = Ifigsize)
     
     num_iterations = len(model[:,0])
     num_agents = len(model[0])
@@ -440,16 +438,15 @@ def plot_model_Graph_b(model, x_label = "Iteration", y_label = "Opinion", axisla
     colors = pl.cm.jet(np.linspace(0,1,num_agents))
     
     for a in range(0,num_agents-1):
-         plt.plot(range(0, num_iterations), model[:, a], color = colors[a])
+         ax.plot(range(0, num_iterations), model[:, a], color = colors[a])
          
-    plt.xlabel(x_label, fontsize = axislabelsize)
-    plt.ylabel(y_label, fontsize = axislabelsize)
-    
-    plt.title(title)
+    ax.set_xlabel(x_label, fontsize = axislabelsize)
+    ax.set_ylabel(y_label, fontsize = axislabelsize)
 
     #plt.ylim(-0.05, 1)    
 
-    plt.xticks(range(0, num_iterations))
+    ax.set_xticks(range(0, num_iterations))
+    ax.tick_params(axis='both', labelsize=12)
     
     #plt.plot([0, 10], [0.2, 0.2], linestyle = "--")
 
@@ -483,10 +480,6 @@ def plot_model_Graph_c(model, x_label = "Iteration", y_label = "Opinion", axisla
 
 def plot_model_Graph_d(model, deaths, births, x_label = "Iteration", y_label = "Opinion", axislabelsize = 14, confidence_dist = 0, title = "", showaverage = False):
     
-    
-    
-    
-    
     num_iterations = len(model[:,0])
     num_agents = len(model[0])
     
@@ -502,7 +495,15 @@ def plot_model_Graph_d(model, deaths, births, x_label = "Iteration", y_label = "
 
     #plt.ylim(-0.05, 1)    
 
-    plt.xticks(range(0, num_iterations))
+    xtickscust = []
+    for tick in range(0, num_iterations):
+        if tick // 2 == tick/2:
+            xtickscust.append(str(tick))
+        else:
+            xtickscust.append("")
+    
+    plt.xticks(range(len(xtickscust)), xtickscust, rotation = 90, fontsize = 12)
+    plt.yticks(fontsize = 12)
     
     plt.scatter(deaths[:, 0], deaths[:, 1], marker = "x", color = "red")
     plt.scatter(births[:, 0], births[:, 1], marker = "o", color = "green")
@@ -512,7 +513,7 @@ def plot_model_Graph_d(model, deaths, births, x_label = "Iteration", y_label = "
         
         
     if showaverage == True:
-        plt.plot(range(0, num_iterations), [mean(a for a in x if a != None) for x in model], linestyle = "--", color = "black")
+        plt.plot(range(0, num_iterations), [mean(a for a in x if a != None) for x in model], linestyle = "--", color = "orange", linewidth = 3)
 
 
 def plot_model_Graph_3D(model):
@@ -553,41 +554,132 @@ def plot_model_Graph_3D(model):
 
 def run_experiment_1(opinions, numrepeats, num_agents):
     
-    arraytoreturn = []
+    randarraytoreturn = []
+    evenarraytoreturn = []
     nopeaks = []
+    
+    startagentseven = get_startOpinions_1D(num_agents, "uniform_even") 
     
     for ops in opinions:
         nopeaks = []
         print(ops)
+        tempmodel2 = run_model_2(startagentseven, 20, ops, 0, rateofdecrease = 0.0, until_convergence = True)
+        evenarraytoreturn.append(calc_howmanyconcensuses(tempmodel2))
         for i in range(numrepeats):
         
             startagents = get_startOpinions_1D(num_agents, "uniform_rand")    
         
             tempmodel = run_model_2(startagents, 20, ops, 0, rateofdecrease = 0.0, until_convergence = True)
             nopeaks.append(calc_howmanyconcensuses(tempmodel))
-        arraytoreturn.append(nopeaks)
+        randarraytoreturn.append(nopeaks)
+        
+    
+        
             
-    return arraytoreturn
+    return randarraytoreturn, evenarraytoreturn
 
-def plot_experiment_1(opinions, concensuses):
+def plot_experiment_1(opinions, concensusesrand, concensuseseven):
     
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize = (7, 5))
     
-    averageconcensuses = [np.mean(a) for a in testarray]
+    averageconcensuses = [np.mean(a) for a in concensusesrand]
 
-    ax.plot( opinions, averageconcensuses)
+    ax.plot( opinions, averageconcensuses, label = "Avg of random")
     
-    ax.set_ylabel("Average no. Consensusses", fontsize = 14)
+    ax.plot(opinions, concensuseseven, linestyle = "--", color = "red", label = "Even spread")
+    
+    ax.set_ylabel("Average no. Consensuses", fontsize = 14)
     ax.set_xlabel("Confidence Region", fontsize = 14)
     
+    temptitle = plt.legend(fontsize = 12)
     
+    ax.tick_params(axis='both', labelsize=12)
     
 
-num_agents = 100
 
+
+
+def run_experiment_2(influencingvals, confidencevals, numrepeats, num_agents):
+
+    arraytoreturn = []
+    diffcvs = []
+    startagents = get_startOpinions_1D(num_agents, "uniform_even") 
+    
+    for iv in influencingvals: 
+        diffcvs = []
+        for cv in confidencevals:
+            model = run_model_3_V2(startagents, 20, 0.2, until_convergence = True, influentialagents = [0] , influencingconfidencevalues = [cv], influencingweightvalues= [iv])
+            
+                
+            diffcvs.append(np.mean(model[-1]))
+        
+        arraytoreturn.append(diffcvs)
+        
+    return np.array(arraytoreturn)
+
+def plot_experiment_2(influencingvals, confidencevals, results):
+    fig, ax = plt.subplots(figsize = (6, 7))
+    
+    
+    for i, cv in enumerate(confidencevals):
+            
+        ax.plot(influencingvals, results[:,i], label = np.round(0.2*cv, 1))
+    
+    currlegend = plt.legend(fontsize = 12, ncol = 2, title = r"$r$ values")
+    currlegend.get_title().set_fontsize(14)
+    
+    ax.set_ylabel("Avg. Final Opinion", fontsize = 14)
+    ax.set_xlabel(r"Influencing weight ($\omega$)", fontsize = 14)
+
+    ax.tick_params(axis = "both", labelsize = 12)
+
+
+
+#---------different IV---------#
+#num_agents = 100
+#test =  get_startOpinions_1D(num_agents, "uniform_rand")
+#test.sort()
+
+#model = run_model_3_V2(test, 15, 0.2, until_convergence = True, influentialagents = [0] , influencingconfidencevalues = [0.7/0.2], influencingweightvalues= [35])
+#plot_model_Graph_b(model, Ifigsize = (6, 7))
+
+#---------Experiment 2---------#
+#influencingvals = np.linspace(1, 100, 10)
+#confidencevals = np.linspace(1, 4, 6)
+
+#results_exp2 = run_experiment_2(influencingvals, confidencevals, 1, 100)
+#plot_experiment_2(influencingvals, confidencevals, results_exp2)
+#print(results_exp2)
+
+
+#---------Experiment 1---------#
+#opinionstotest = np.linspace(.1, .3, 20)
+
+#results1, results2 = run_experiment_1(opinionstotest, 100, 100)
+
+#plot_experiment_1(opinionstotest, results1, results2)
+
+
+
+#---------Death and birth---------#
+num_agents = 50
 test =  get_startOpinions_1D(num_agents, "uniform_rand")
+agentsages = [int(max(1, round(x*10/num_agents, 0))) for x in range(0, num_agents)]
 
-test.sort()
+model, deaths, births = run_model_4_V2(test, 101, 0.2, agentsages, shiftval = 0.02)
+
+
+plot_model_Graph_d(model, deaths, births, showaverage = True)
+
+
+
+
+
+#num_agents = 100
+
+#test =  get_startOpinions_1D(num_agents, "uniform_rand")
+
+#test.sort()
 
 #agentsages = [int(max(1, round(x*10/num_agents, 0))) for x in range(0, num_agents)]
 #agentsages = list(np.random.randint(0, 1, num_agents))
@@ -597,14 +689,14 @@ test.sort()
 #print(average_surrounding_opinions_V2([1, None], [[1, 0],[0, 1]]))
 
 #model, deaths, births = run_model_4_V2(test, 100, 0.2, agentsages, shiftval = 0.02)
-#model = run_model_3_V2(test, 10, 0.2, until_convergence = False, influentialagents = [0] , influencingconfidencevalues = [1], influencingweightvalues= [1])
-#model = run_model_2(test, 20, 0.2, 0.0, rateofdecrease = 0.0, until_convergence = False)
+#model = run_model_3_V2(test, 20, 0.2, until_convergence = True, influentialagents = [0] , influencingconfidencevalues = [1], influencingweightvalues= [30])
+#model = run_model_2(test, 20, 0.2, 0.0, rateofdecrease = 0.0, until_convergence = True)
 
-opinionstotest = np.linspace(.1, .3, 10)
+#opinionstotest = np.linspace(.1, .3, 20)
 
-testarray = run_experiment_1(opinionstotest, 10, 100)
+#testarray = run_experiment_1(opinionstotest, 100, 100)
 
-plot_experiment_1(opinionstotest, testarray)
+#plot_experiment_1(opinionstotest, testarray)
 
 #print(calc_howmanyconcensuses(model))
 
